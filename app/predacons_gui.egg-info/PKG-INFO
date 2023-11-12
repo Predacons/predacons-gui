@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: predacons-gui
+Version: 0.0.101
+Summary: Gui for Predacons
+Home-page: https://github.com/shouryashashank/predacons-gui
+Author: shouryashashank
+Author-email: shouryashashank@gmail.com
+License: MIT
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+License-File: LICENSE
+
+## predacons-gui
