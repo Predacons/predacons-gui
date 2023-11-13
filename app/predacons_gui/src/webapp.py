@@ -91,9 +91,7 @@ class WebApp:
 
     def __web_page():
         with gr.Blocks() as gui:
-        # gr.Image("pico.png")
             gr.Markdown ("""
-            ![pngegg-1.png](https://i.postimg.cc/YSzMP1M8/pngegg-1-1.png)
             # Predacons""")
             with gr.Tab(label="Train"):
                 save_input = None
