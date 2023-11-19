@@ -28,7 +28,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
     ],
-    install_requires=["predacons >= 0.0.106",
+    install_requires=["predacons >= 0.0.107",
                     "gradio >= 4.2.0"]
 ,
     extras_require={
