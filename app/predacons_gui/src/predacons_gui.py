@@ -1,5 +1,5 @@
 from .webapp import WebApp
 
 def launch():
-    print ("Hello, world!")
+    print ("Launching Predecons-gui...")
     WebApp.launch()
