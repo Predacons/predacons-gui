@@ -1,5 +1,7 @@
 import gradio as gr
 import predacons
+import openai
+import os
 
 class WebApp:
     # data preprocessing
@@ -88,11 +90,42 @@ class WebApp:
             history[-1][1] += character
             yield history
     
+    def __create_openai_client(gpt_api_version,gpt_api_key = None,gpt_azure_endpoint = None,is_azure_openai = False):
+        print("crating open ai client") 
+        client = None
+        if(not(gpt_api_key == None or gpt_api_key == "")):
+            os.environ['AZURE_OPENAI_API_KEY'] = gpt_api_key
+            os.environ['OPENAI_API_KEY'] = gpt_api_key
+        if(is_azure_openai):
+            client = openai.AzureOpenAI(
+                    api_version=gpt_api_version,
+                    azure_endpoint=gpt_azure_endpoint,
+                )
+        else:
+            client= openai.OpenAI()
+        return client
+    
+    def __generate_text_data_openai(gpt_model,prompt,no_of_output,temp,gpt_api_version,gpt_api_key = None,gpt_azure_endpoint = None):
+        is_azure_openai = True
+        if(gpt_azure_endpoint == None or gpt_azure_endpoint == ""):
+            is_azure_openai = False
+        client = WebApp.__create_openai_client(gpt_api_version,gpt_api_key,gpt_azure_endpoint,is_azure_openai)
+        return predacons.generate_text_data_source(client,gpt_model,prompt,no_of_output,temp)
+
 
     def __web_page():
         with gr.Blocks() as gui:
             gr.Markdown ("""
-            # Predacons""")
+            <table>
+                <tr >
+                    <td style="border: none; padding: 0;">
+                    <a href="https://github.com/Predacons"><img src="https://i.postimg.cc/YSzMP1M8/pngegg-1-1.png" width="60px" height="60px"></a>
+                    </td>
+                    <td style="border: none; padding: 10; vertical-align: middle;">
+                    <a href="https://github.com/Predacons" style="text-decoration: none;"><H1>Predacons<H1></a>
+                    </td>
+                </tr>
+            </table>""")
             with gr.Tab(label="Train"):
                 save_input = None
                 with gr.Row():
@@ -156,7 +189,56 @@ class WebApp:
                 )
                 txt_msg.then(lambda: gr.Textbox(interactive=True), None, [txt], queue=False)
                 clear = gr.ClearButton([txt, chatbot])
-
+            with gr.Tab(label="Training Data Creation"):
+                with gr.Row():
+                    model_name
+                    prompt = None
+                    gpt_api_version = None
+                    gpt_azure_endpoint = None
+                    gpt_api_key = None
+                    gpt_model = None
+                    temperature = None
+                    no_of_results = None
+                    training_data = None
+                    client = None
+                    with gr.Tab(label = "OpenAI"):
+                        with gr.Tab(label = "OpenAI"):
+                            gpt_api_version = gr.Textbox(label="gpt_api_version")
+                            gpt_api_key = gr.Textbox(label="gpt_api_key")
+                            btn = gr.Button("Create OpenAI Client")
+                            gpt_model = gr.Textbox(label="gpt_model")
+                            temperature = gr.Slider(minimum=0, maximum=1, value=0.5, label="Temperature")
+                            no_of_results = gr.Slider(minimum=1, maximum=100, value=10,step=1, label="No of outputs")
+                            prompt = gr.Textbox(label="Prompt")
+                            gen_btn = gr.Button("generate training data set")
+                            training_data = gr.Textbox(label="training data")
+                            gen_btn.click(WebApp.__generate_text_data_openai, inputs=[gpt_model,prompt,no_of_results,temperature,gpt_api_version,gpt_api_key],outputs=[training_data])
+                        
+                        with gr.Tab(label = "Azure OpenAI"):
+                            gpt_api_version = gr.Textbox(label="gpt_api_version")
+                            gpt_azure_endpoint = gr.Textbox(label="gpt_azure_endpoint")
+                            gpt_api_key = gr.Textbox(label="gpt_api_key")
+                            gpt_model = gr.Textbox(label="gpt_model")
+                            temperature = gr.Slider(minimum=0, maximum=1, value=0.5, label="Temperature")
+                            no_of_results = gr.Slider(minimum=1, maximum=100, value=10,step=1, label="No of outputs")
+                            prompt = gr.Textbox(label="Prompt")
+                            gen_btn = gr.Button("generate training data set")
+                            training_data = gr.Textbox(label="training data")
+                            gen_btn.click(WebApp.__generate_text_data_openai, inputs=[gpt_model,prompt,no_of_results,temperature,gpt_api_version,gpt_api_key,gpt_azure_endpoint],outputs=[training_data])
+                    
+                    with gr.Tab(label = "LLM model"):
+                        gr.Markdown ("""
+                                ## Under Development 
+                                * Want to contribute go here: [Predacons Github](https://github.com/Predacons) """)
+                        with gr.Tab(label = "local model"):
+                            model_name = gr.Textbox(label="Model path")
+                        with gr.Tab(label = "Huggingface model"):
+                            model_name = gr.Dropdown(["gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True)
+                            
+            gr.Markdown ("""
+                        <p style="text-align: center; font-size: small;">Powered by <a href="https://github.com/Predacons">Predacons</a> </p>
+                        <p style="text-align: center; font-size: small;"><a href="https://github.com/shouryashashank">Shourya Shashank</a> </p> """)                
+                    
         return gui
 
     def launch():
