@@ -2,16 +2,16 @@
 Predecons-GUI is a gradio based front end for predecons a ml tool for building / transferlearning llms
 ## Installation
 ```bash
-pip install predecons-gui
+pip install predacons-gui
 ```
 ## Usage
 ```python
-import predecons_gui
-predecons_gui.launch()
+import predacons_gui
+predacons_gui.launch()
 ```
 
 ```bash
-predecons-gui
+predacons-gui
 ```
 ## Features
 - [x] Gradio based front end

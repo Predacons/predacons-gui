@@ -1,4 +1,4 @@
-predacons>=0.0.106
+predacons>=0.0.109
 gradio>=4.2.0
 
 [dev]
