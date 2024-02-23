@@ -1,2 +1,2 @@
-predacons >= 0.0.108
+predacons >= 0.0.112
 gradio

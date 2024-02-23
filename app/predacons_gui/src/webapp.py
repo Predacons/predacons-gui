@@ -110,7 +110,10 @@ class WebApp:
         if(gpt_azure_endpoint == None or gpt_azure_endpoint == ""):
             is_azure_openai = False
         client = WebApp.__create_openai_client(gpt_api_version,gpt_api_key,gpt_azure_endpoint,is_azure_openai)
-        return predacons.generate_text_data_source(client,gpt_model,prompt,no_of_output,temp)
+        return predacons.generate_text_data_source_openai(client,gpt_model,prompt,no_of_output,temp)
+    
+    def __generate_text_data_llm(model_path, sequence, max_length,number_of_examples,trust_remote_code=False):
+        return predacons.generate_text_data_source_llm(model_path, sequence, max_length,number_of_examples,trust_remote_code=trust_remote_code)
 
 
     def __web_page():
@@ -227,13 +230,20 @@ class WebApp:
                             gen_btn.click(WebApp.__generate_text_data_openai, inputs=[gpt_model,prompt,no_of_results,temperature,gpt_api_version,gpt_api_key,gpt_azure_endpoint],outputs=[training_data])
                     
                     with gr.Tab(label = "LLM model"):
-                        gr.Markdown ("""
-                                ## Under Development 
-                                * Want to contribute go here: [Predacons Github](https://github.com/Predacons) """)
+                        model_name
                         with gr.Tab(label = "local model"):
                             model_name = gr.Textbox(label="Model path")
                         with gr.Tab(label = "Huggingface model"):
                             model_name = gr.Dropdown(["gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True)
+                        max_len = gr.Slider(minimum=1, maximum=500, value=100, label="max length of the response")
+                        no_of_results = gr.Slider(minimum=1, maximum=100, value=10,step=1, label="No of outputs")
+                        prompt = gr.Textbox(label="Prompt")
+                        trust_remote_code = gr.Checkbox(label="enable trust remote code")
+                        gen_btn = gr.Button("generate training data set")
+                        training_data1 = gr.Textbox(label="training data")
+                        gen_btn.click(WebApp.__generate_text_data_llm, inputs=[model_name, prompt, max_len,no_of_results,trust_remote_code],outputs=[training_data1])
+
+
                             
             gr.Markdown ("""
                         <p style="text-align: center; font-size: small;">Powered by <a href="https://github.com/Predacons">Predacons</a> </p>
