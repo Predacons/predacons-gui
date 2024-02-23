@@ -7,7 +7,7 @@ HERE = pathlib.Path(__file__).parent
 
 setup(
     name="predacons_gui",
-    version="0.0.104",
+    version="0.0.105",
     description="Gui for Predacons",
     package_dir={"": "app"},
     packages=find_packages(where="app"),
@@ -28,7 +28,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Operating System :: OS Independent",
     ],
-    install_requires=["predacons >= 0.0.109",
+    install_requires=["predacons >= 0.0.112",
                     "gradio >= 4.2.0"]
 ,
     extras_require={
