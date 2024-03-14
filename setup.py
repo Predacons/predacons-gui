@@ -7,7 +7,7 @@ HERE = pathlib.Path(__file__).parent
 
 setup(
     name="predacons_gui",
-    version="0.0.105",
+    version="0.0.106",
     description="Gui for Predacons",
     package_dir={"": "app"},
     packages=find_packages(where="app"),
