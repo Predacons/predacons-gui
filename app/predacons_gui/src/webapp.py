@@ -84,10 +84,18 @@ class WebApp:
         return chat_body
 
     def __load_model(model_path,gguf_file=None,auto_quantize=None):
+        if auto_quantize == "none":
+            auto_quantize = None
+        if gguf_file == None or gguf_file == "":
+            gguf_file = None
         global MODEL, TOKENIZER
-        MODEL = predacons.load_model(model_path,gguf_file=gguf_file,auto_quantize =auto_quantize)
-        TOKENIZER = predacons.load_tokenizer(model_path)
-        # return [model, tokenizer]
+        try:
+            MODEL = predacons.load_model(model_path,gguf_file=gguf_file,auto_quantize =auto_quantize)
+            TOKENIZER = predacons.load_tokenizer(model_path)
+            return model_path + " loaded successfully"
+        except Exception as e:
+            return model_path + "  failed to load  : Error: "+str(e)
+    
     def __add_text(history, text,enable_history=True):
         if enable_history:
             history = history + [(text, None)]
@@ -189,47 +197,45 @@ class WebApp:
                         btn.click(WebApp.__train_model, inputs=[save_input,model_name, output_dir, overwrite_output_dir, per_device_train_batch_size, num_train_epochs, save_steps],outputs=[completed])
                     
             with gr.Tab(label="Chat"):
-                model_name1 = None
                 max_len = None
-                model=None
-                tokenizer = None
-                model_output = None
+                gguf_file = None
+                quantize = None
                 enable_history = None
                 temp = None
                 with gr.Row():
-                    with gr.Column():
-                        with gr.Tab(label = "local model"):
-                            model_name1 = gr.Textbox(label="Model path")
-                            load_model_btn1 = gr.Button("Load Model")
-                        with gr.Tab(label = "Huggingface model"):
-                            model_name2 = gr.Dropdown(["gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True)
-                            load_model_btn2 = gr.Button("Load Model")
-                    with gr.Column():
-                        max_len = gr.Slider(minimum=1, maximum=5000, value=500, label="max length of the response")
-                        temp = gr.Slider(minimum=0, maximum=2, value=0.3, label="temprerature of the model")
-                        enable_history = gr.Checkbox(label="Enable History")
-                        model_output = gr.Textbox(label="Model Output", interactive=False)
-                # model1 = load_model_btn2.click(WebApp.__load_model, inputs=[model_name])
-                load_model_btn1.click(WebApp.__load_model, inputs=[model_name1])
-                chatbot = gr.Chatbot(
-                [],
-                elem_id="chatbot",
-                bubble_full_width=False,
-                # avatar_images=(None, (os.path.join(os.path.dirname(__file__), "avatar.png"))),
-                )
+                    with gr.Column(scale=1):
+                        with gr.Row():
+                            model_name = gr.Dropdown(["Precacons/Pico-Lamma-3.2-1B-Reasoning-Instruct","gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True,label="Enter path,id or select from dropdown")
+                            gguf_file = gr.Textbox(label="Enter GGUF file path")
+                            quantize = gr.Radio(["None", "4bit", "8bit"], label="quantization", info="does not work on prequantized models?")
+                            load_model_btn = gr.Button("Load Model")
+                            load_status = gr.Textbox(label="Model Load Status")
+                        with gr.Row():
+                            max_len = gr.Slider(minimum=1, maximum=5000, value=500, label="max length of the response")
+                            temp = gr.Slider(minimum=0, maximum=2, value=0.3, label="temprerature of the model")
+                            enable_history = gr.Checkbox(label="Enable History")
+                        load_model_btn.click(WebApp.__load_model, inputs=[model_name,gguf_file,quantize], outputs=[load_status])
+                    
+                    with gr.Column(scale=4):
+                        chatbot = gr.Chatbot(
+                            [],
+                            elem_id="chatbot",
+                            bubble_full_width=False,
+                            height=600
+                            # avatar_images=(None, (os.path.join(os.path.dirname(__file__), "avatar.png"))),
+                            )
 
-                with gr.Row():
-                    txt = gr.Textbox(
-                        scale=4,
-                        show_label=False,
-                        placeholder="Enter text and press enter",
-                        container=False,
-                    )
-                txt_msg = txt.submit(WebApp.__add_text, [chatbot, txt, enable_history], [chatbot, txt], queue=False).then(
-                    WebApp.__bot, [chatbot,max_len,temp], chatbot, api_name="bot_response"
-                )
-                txt_msg.then(lambda: gr.Textbox(interactive=True), None, [txt], queue=False)
-                clear = gr.ClearButton([txt, chatbot])
+                        txt = gr.Textbox(
+                            scale=4,
+                            show_label=False,
+                            placeholder="Enter text and press enter",
+                            container=False,
+                        )
+                        txt_msg = txt.submit(WebApp.__add_text, [chatbot, txt, enable_history], [chatbot, txt], queue=False).then(
+                            WebApp.__bot, [chatbot,max_len,temp], chatbot, api_name="bot_response"
+                        )
+                        txt_msg.then(lambda: gr.Textbox(interactive=True), None, [txt], queue=False)
+                        clear = gr.ClearButton([txt, chatbot])
             with gr.Tab(label="Training Data Creation"):
                 with gr.Row():
                     model_name
