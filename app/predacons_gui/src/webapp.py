@@ -213,7 +213,7 @@ class WebApp:
                         with gr.Row():
                             max_len = gr.Slider(minimum=1, maximum=5000, value=500, label="max length of the response")
                             temp = gr.Slider(minimum=0, maximum=2, value=0.3, label="temprerature of the model")
-                            enable_history = gr.Checkbox(label="Enable History")
+                            enable_history = gr.Checkbox(label="Enable History", value=True)
                         load_model_btn.click(WebApp.__load_model, inputs=[model_name,gguf_file,quantize], outputs=[load_status])
                     
                     with gr.Column(scale=4):
