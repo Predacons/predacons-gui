@@ -5,7 +5,8 @@ import os
 
 class WebApp:
     # data preprocessing
-
+    MODEL = None
+    TOKENIZER = None
     def __read_text(files):
         raw_text = predacons.read_multiple_files(files)
         return raw_text
@@ -70,7 +71,23 @@ class WebApp:
                 history_text += "Q: "+text[0] +"\n"+"A: "+text[1]+"\n"
         return history_text
         
+    # generate chat
+    def __history_to_chat(history):
+        chat_body = []
+        for text in history:
+            print(text)
+            if text[1] is None:
+                chat_body.append({"role": "user", "content": text[0]})
+            else:
+                chat_body.append({"role": "user", "content": text[0]})
+                chat_body.append({"role": "user", "content": text[0]})
+        return chat_body
 
+    def __load_model(model_path,gguf_file=None,auto_quantize=None):
+        global MODEL, TOKENIZER
+        MODEL = predacons.load_model(model_path,gguf_file=gguf_file,auto_quantize =auto_quantize)
+        TOKENIZER = predacons.load_tokenizer(model_path)
+        # return [model, tokenizer]
     def __add_text(history, text,enable_history=True):
         if enable_history:
             history = history + [(text, None)]
@@ -80,12 +97,22 @@ class WebApp:
         return history, gr.Textbox(value="", interactive=False)
 
 
-    def __bot(history,model,max_len):
+    def __bot(history,max_len,temperature):
         print (history)
-        history_text = WebApp.__history_to_text(history)
-        print(history_text)
+        chat_body = WebApp.__history_to_chat(history)
+        print(chat_body)
         history[-1][1] = ""
-        response = predacons.generate_text(model, history_text, max_len)
+        global MODEL, TOKENIZER
+        # response = predacons.generate_text(model, history, max_len)
+        response = predacons.chat_generate(
+            model = MODEL,
+            sequence = chat_body,
+            max_length = max_len,
+            tokenizer = TOKENIZER,
+            trust_remote_code = True,
+            do_sample=True,
+            temperature = temperature
+        )
         for character in response:
             history[-1][1] += character
             yield history
@@ -162,17 +189,28 @@ class WebApp:
                         btn.click(WebApp.__train_model, inputs=[save_input,model_name, output_dir, overwrite_output_dir, per_device_train_batch_size, num_train_epochs, save_steps],outputs=[completed])
                     
             with gr.Tab(label="Chat"):
-                model_name = None
+                model_name1 = None
                 max_len = None
-                
+                model=None
+                tokenizer = None
+                model_output = None
+                enable_history = None
+                temp = None
                 with gr.Row():
-                    with gr.Tab(label = "local model"):
-                        model_name = gr.Textbox(label="Model path")
-                    with gr.Tab(label = "Huggingface model"):
-                        model_name = gr.Dropdown(["gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True)
-                    max_len = gr.Slider(minimum=1, maximum=500, value=100, label="max length of the response")
-                with gr.Row():
-                    enable_history = gr.Checkbox(label="Enable History")
+                    with gr.Column():
+                        with gr.Tab(label = "local model"):
+                            model_name1 = gr.Textbox(label="Model path")
+                            load_model_btn1 = gr.Button("Load Model")
+                        with gr.Tab(label = "Huggingface model"):
+                            model_name2 = gr.Dropdown(["gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"],allow_custom_value=True)
+                            load_model_btn2 = gr.Button("Load Model")
+                    with gr.Column():
+                        max_len = gr.Slider(minimum=1, maximum=5000, value=500, label="max length of the response")
+                        temp = gr.Slider(minimum=0, maximum=2, value=0.3, label="temprerature of the model")
+                        enable_history = gr.Checkbox(label="Enable History")
+                        model_output = gr.Textbox(label="Model Output", interactive=False)
+                # model1 = load_model_btn2.click(WebApp.__load_model, inputs=[model_name])
+                load_model_btn1.click(WebApp.__load_model, inputs=[model_name1])
                 chatbot = gr.Chatbot(
                 [],
                 elem_id="chatbot",
@@ -188,7 +226,7 @@ class WebApp:
                         container=False,
                     )
                 txt_msg = txt.submit(WebApp.__add_text, [chatbot, txt, enable_history], [chatbot, txt], queue=False).then(
-                    WebApp.__bot, [chatbot,model_name,max_len], chatbot, api_name="bot_response"
+                    WebApp.__bot, [chatbot,max_len,temp], chatbot, api_name="bot_response"
                 )
                 txt_msg.then(lambda: gr.Textbox(interactive=True), None, [txt], queue=False)
                 clear = gr.ClearButton([txt, chatbot])
@@ -254,3 +292,6 @@ class WebApp:
     def launch():
         webapp = WebApp.__web_page()
         webapp.launch()
+
+
+WebApp.launch()
